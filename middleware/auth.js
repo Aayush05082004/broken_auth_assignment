@@ -1,16 +1,23 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
-  
-  const token = req.headers.authorization;
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
+  if (!authHeader) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
+  const parts = authHeader.split(" ");
+
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
+    return res.status(401).json({ error: "Malformed token" });
+  }
+
+  const token = parts[1];
+
   try {
     const secret = process.env.JWT_SECRET || "default-secret-key";
-    const decoded = jwt.verify(token.replace("Bearer ", ""), secret);
+    const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();
   } catch (error) {
